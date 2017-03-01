@@ -5,8 +5,8 @@ android {
     buildToolsVersion "24.0.2"
     defaultConfig {
         applicationId "cn.jianke.uiperformancedetect"
-        minSdkVersion 15
-        targetSdkVersion 24
+        minSdkVersion 16
+        targetSdkVersion 22
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

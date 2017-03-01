@@ -22,6 +22,8 @@ public class LogMonitor {
     private HandlerThread mLogThread;
     // handler
     private Handler mLogHandler;
+    // 是否监视中
+    private boolean isMonitoring = false;
     // log打印runnable
     private static Runnable mLogRunnable = new Runnable() {
         @Override
@@ -67,6 +69,18 @@ public class LogMonitor {
     }
 
     /**
+     * 是否监视中
+     * @author leibing
+     * @createTime 2017/3/1
+     * @lastModify 2017/3/1
+     * @param
+     * @return
+     */
+    public boolean isMonitor(){
+        return isMonitoring;
+    }
+
+    /**
      * 开启监视器
      * @author leibing
      * @createTime 2017/3/1
@@ -75,9 +89,10 @@ public class LogMonitor {
      * @return
      */
     public void startMonitor(){
-        removeMonitor();
-        if (mLogHandler != null && mLogRunnable != null)
+        if (mLogHandler != null && mLogRunnable != null) {
+            isMonitoring = true;
             mLogHandler.postDelayed(mLogRunnable, DETECT_PERFORMANCE_TIME);
+        }
     }
 
     /**
@@ -89,7 +104,9 @@ public class LogMonitor {
      * @return
      */
     public void removeMonitor(){
-        if (mLogHandler != null && mLogRunnable != null)
+        if (mLogHandler != null && mLogRunnable != null) {
+            isMonitoring = false;
             mLogHandler.removeCallbacks(mLogRunnable);
+        }
     }
 }

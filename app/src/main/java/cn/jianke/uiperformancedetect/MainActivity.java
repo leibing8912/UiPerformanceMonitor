@@ -17,20 +17,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // onClick
-        findViewById(R.id.btn_looper_detect).setOnClickListener(this);
+        findViewById(R.id.btn_performance_detect).setOnClickListener(this);
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()){
-            case R.id.btn_looper_detect:
-                // 通过looper日志检测ui性能
+            case R.id.btn_performance_detect:
                 // 模拟制造一个阻塞ui操作，在主线程中试图休眠2秒
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                break;
+            default:
                 break;
         }
     }
