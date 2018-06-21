@@ -139,7 +139,7 @@ public class LogMonitor {
     /**
      * 记录堆栈日志到本地
      */
-    public synchronized void logStackTraceRecord() {
+    public synchronized void logStackTraceRecord(long diffMs) {
         if (mStackHashList == null || mStackTraceList == null) {
             return;
         }
@@ -156,8 +156,10 @@ public class LogMonitor {
         }
         if (mStackTraceList.size() != 0 && repeatAtMostIndex < mStackTraceList.size()) {
             String repeatAtMostStackTrace = mStackTraceList.get(repeatAtMostIndex);
-            Log.v(TAG, "#logStackTraceRecord repeatCount : " + repeatCount
-                    + " repeatAtMostStackTrace : " + repeatAtMostStackTrace);
+            Log.v(TAG, "#logStackTraceRecord " + "\n"
+                    + "repeatCount : " + repeatCount + " time" + "\n"
+                    + "cost : " + diffMs + " ms" + "\n"
+                    + "repeatAtMostStackTrace : " + repeatAtMostStackTrace);
         }
         // 清空列表
         mStackTraceList.clear();

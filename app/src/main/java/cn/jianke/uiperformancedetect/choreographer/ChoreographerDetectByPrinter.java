@@ -43,13 +43,14 @@ public class ChoreographerDetectByPrinter {
                 }
                 if (droppedCount >= 5) {
                     // 视为卡顿，将堆栈记录到日志
-                    LogMonitor.getInstance().logStackTraceRecord();
+                    LogMonitor.getInstance().logStackTraceRecord(diffMs);
                 }
                 if (LogMonitor.getInstance().isMonitor()) {
                     LogMonitor.getInstance().removeMonitor();
                 }
                 LogMonitor.getInstance().startMonitor();
                 Choreographer.getInstance().postFrameCallback(this);
+                lastFrameTimeNanos = curFrameTimeNanos;
             }
         });
     }
