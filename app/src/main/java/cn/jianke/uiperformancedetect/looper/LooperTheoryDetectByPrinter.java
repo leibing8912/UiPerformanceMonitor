@@ -6,8 +6,10 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.MessageQueue;
 import android.util.Log;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+
 import cn.jianke.uiperformancedetect.monitor.LogMonitor;
 
 /**
@@ -26,13 +28,8 @@ public class LooperTheoryDetectByPrinter {
 
     /**
      * 开始监测ui线程
-     * @author leibing
-     * @createTime 2017/3/1
-     * @lastModify 2017/3/1
-     * @param
-     * @return
      */
-    public static void start(){
+    public static void start() {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
@@ -56,8 +53,8 @@ public class LooperTheoryDetectByPrinter {
                     // 暂时获取系统权限
                     Binder.clearCallingIdentity();
                     // 遍历拿消息
-                    for (;;){
-                        Log.e(TAG ,"read msg from message queue");
+                    for (; ; ) {
+                        Log.e(TAG, "read msg from message queue");
                         // 消息队列取消息
                         Message msg = (Message) methodNext.invoke(mQueue);
                         if (msg == null)
@@ -71,8 +68,8 @@ public class LooperTheoryDetectByPrinter {
                         // 移除ui监视器
                         LogMonitor.getInstance().removeMonitor();
                     }
-                }catch (Exception ex){
-                    Log.e(TAG ,ex.getMessage());
+                } catch (Exception ex) {
+                    Log.e(TAG, ex.getMessage());
                 }
             }
         });

@@ -20,19 +20,25 @@ public class LogMonitor {
     private final static String TAG = "LogMonitor";
     // 检测ui性能间隔时间
     private static final long DETECT_PERFORMANCE_TIME = 53L;
-    // sington
+    // 单例实例
     private static LogMonitor instance;
-    // 带looper的thread
-    private HandlerThread mLogThread;
-    // handler
-    private Handler mLogHandler;
+    // 日志采集带looper线程
+    private HandlerThread mCollectLogsThread;
+    // 日志存储带looper线程
+    private HandlerThread mStoreLogsThread;
+    // 日志采集handler
+    private Handler mCollectLogsHandler;
+    // 日志存储handler
+    private Handler mStoreLogsHandler;
     // 是否监视中
     private boolean isMonitoring = false;
     // 堆栈哈希值列表
     private List<Integer> mStackHashList;
     // 堆栈列表
     private List<String> mStackTraceList;
-    // log打印runnable
+    // 卡顿耗时
+    private long catonDiffMs = 0;
+    // 日志采集Runnable
     private Runnable mLogRunnable = new Runnable() {
         @Override
         public void run() {
@@ -53,34 +59,57 @@ public class LogMonitor {
                 mStackHashList.add(sb.toString().hashCode());
                 mStackTraceList.add(sb.toString());
 
-                mLogHandler.postDelayed(mLogRunnable, DETECT_PERFORMANCE_TIME);
+                mCollectLogsHandler.postDelayed(mLogRunnable, DETECT_PERFORMANCE_TIME);
             }
+        }
+    };
+    // 日志存储Runnable
+    private Runnable mStoreLogsRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (mStackHashList == null || mStackTraceList == null) {
+                return;
+            }
+            // 重复最多的堆栈索引
+            int repeatAtMostIndex = 0;
+            // 重复次数
+            int repeatCount = 0;
+            int size = mStackHashList.size();
+            for (int i = 0; i < size; i++) {
+                if (Collections.frequency(mStackHashList, mStackHashList.get(i)) > repeatCount) {
+                    repeatCount = Collections.frequency(mStackHashList, mStackHashList.get(i));
+                    repeatAtMostIndex = i;
+                }
+            }
+            if (mStackTraceList.size() != 0 && repeatAtMostIndex < mStackTraceList.size()) {
+                String repeatAtMostStackTrace = mStackTraceList.get(repeatAtMostIndex);
+                Log.v(TAG, "#logStackTraceRecord " + "\n"
+                        + "repeatCount : " + repeatCount + " time" + "\n"
+                        + "cost : " + catonDiffMs + " ms" + "\n"
+                        + "repeatAtMostStackTrace : " + repeatAtMostStackTrace);
+            }
+            // 清空列表
+            mStackTraceList.clear();
+            mStackHashList.clear();
         }
     };
 
     /**
-     * Constructor
-     *
-     * @param
-     * @return
-     * @author leibing
-     * @createTime 2017/3/1
-     * @lastModify 2017/3/1
+     * 实例化
      */
     private LogMonitor() {
-        mLogThread = new HandlerThread("looperLogs");
-        mLogThread.start();
-        mLogHandler = new Handler(mLogThread.getLooper());
+        mCollectLogsThread = new HandlerThread("LogsCollect");
+        mStoreLogsThread = new HandlerThread("LogsStore");
+        mCollectLogsThread.start();
+        mStoreLogsThread.start();
+        mCollectLogsHandler = new Handler(mCollectLogsThread.getLooper());
+        mStoreLogsHandler = new Handler(mStoreLogsThread.getLooper());
     }
 
     /**
-     * get sington
+     * 获取单例实例
      *
-     * @param
      * @return
-     * @author leibing
-     * @createTime 2017/3/1
-     * @lastModify 2017/3/1
      */
     public static LogMonitor getInstance() {
         if (instance == null) {
@@ -94,75 +123,39 @@ public class LogMonitor {
     /**
      * 是否监视中
      *
-     * @param
      * @return
-     * @author leibing
-     * @createTime 2017/3/1
-     * @lastModify 2017/3/1
      */
-    public synchronized boolean isMonitor() {
+    public boolean isMonitor() {
         return isMonitoring;
     }
 
     /**
      * 开启监视器
-     *
-     * @param
-     * @return
-     * @author leibing
-     * @createTime 2017/3/1
-     * @lastModify 2017/3/1
      */
-    public synchronized void startMonitor() {
-        if (mLogHandler != null && mLogRunnable != null) {
+    public void startMonitor() {
+        if (mCollectLogsHandler != null && mLogRunnable != null) {
             isMonitoring = true;
-            mLogHandler.postDelayed(mLogRunnable, DETECT_PERFORMANCE_TIME);
+            mCollectLogsHandler.postDelayed(mLogRunnable, DETECT_PERFORMANCE_TIME);
         }
     }
 
     /**
      * 移除监视器
-     *
-     * @param
-     * @return
-     * @author leibing
-     * @createTime 2017/3/1
-     * @lastModify 2017/3/1
      */
-    public synchronized void removeMonitor() {
-        if (mLogHandler != null && mLogRunnable != null) {
+    public void removeMonitor() {
+        if (mCollectLogsHandler != null && mLogRunnable != null) {
             isMonitoring = false;
-            mLogHandler.removeCallbacks(mLogRunnable);
+            mCollectLogsHandler.removeCallbacks(mLogRunnable);
         }
     }
 
     /**
      * 记录堆栈日志到本地
      */
-    public synchronized void logStackTraceRecord(long diffMs) {
-        if (mStackHashList == null || mStackTraceList == null) {
-            return;
+    public void logStackTraceRecord(long diffMs) {
+        if (mStoreLogsHandler != null && mStoreLogsRunnable != null) {
+            catonDiffMs = diffMs;
+            mStoreLogsHandler.post(mStoreLogsRunnable);
         }
-        // 重复最多的堆栈索引
-        int repeatAtMostIndex = 0;
-        // 重复次数
-        int repeatCount = 0;
-        int size = mStackHashList.size();
-        for (int i = 0; i < size; i++) {
-            if (Collections.frequency(mStackHashList, mStackHashList.get(i)) > repeatCount) {
-                repeatCount = Collections.frequency(mStackHashList, mStackHashList.get(i));
-                repeatAtMostIndex = i;
-            }
-        }
-        if (mStackTraceList.size() != 0 && repeatAtMostIndex < mStackTraceList.size()) {
-            String repeatAtMostStackTrace = mStackTraceList.get(repeatAtMostIndex);
-            Log.v(TAG, "#logStackTraceRecord " + "\n"
-                    + "repeatCount : " + repeatCount + " time" + "\n"
-                    + "cost : " + diffMs + " ms" + "\n"
-                    + "repeatAtMostStackTrace : " + repeatAtMostStackTrace);
-        }
-        // 清空列表
-        mStackTraceList.clear();
-        mStackHashList.clear();
     }
 }

@@ -13,14 +13,9 @@ import cn.jianke.uiperformancedetect.monitor.LogMonitor;
  * @createTime: 2017/3/1
  */
 public class ChoreographerDetectByPrinter {
+
     /**
      * 开始监测ui线程
-     *
-     * @param
-     * @return
-     * @author leibing
-     * @createTime 2017/3/1
-     * @lastModify 2017/3/1
      */
     public static void start() {
         // 要求minSdkVersion > 15
